@@ -36,11 +36,11 @@ env:
   FLUTTER_ELINUX_VERSION: "3.16.9"
   TAG_NAME: "${{ inputs.upload-tag }}"
   # Custom env vars for custom client build (read from secrets via build-custom.yml)
-  RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
-  RELAY_SERVER: ${{ secrets.RELAY_SERVER }}
-  API_SERVER: ${{ secrets.API_SERVER }}
-  RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
-  FIXED_PASSWORD: ${{ secrets.FIXED_PASSWORD }}
+  RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER }}"
+  RELAY_SERVER: "${{ secrets.RELAY_SERVER }}"
+  API_SERVER: "${{ secrets.API_SERVER }}"
+  RS_PUB_KEY: "${{ secrets.RS_PUB_KEY }}"
+  FIXED_PASSWORD: "${{ secrets.FIXED_PASSWORD }}"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   # vcpkg version: 2025.08.27
   # If we change the `VCPKG COMMIT_ID`, please remember:
@@ -252,7 +252,7 @@ jobs:
 
       - name: Set SODIUM_LIB_DIR (arm64)
         # libsodium-sys ships no arm64 Windows prebuilt lib; point it at the vcpkg-built one
-        # (only for arm64 ¡ª leaving it unset lets x64 use the crate's bundled lib).
+        # (only for arm64  leaving it unset lets x64 use the crate's bundled lib).
         if: ${{ matrix.job.arch == 'aarch64' }}
         shell: bash
         run: echo "SODIUM_LIB_DIR=$VCPKG_ROOT/installed/${{ matrix.job.vcpkg-triplet }}/lib" >> "$GITHUB_ENV"
