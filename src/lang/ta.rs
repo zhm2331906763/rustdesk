@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "இயல்புநிலை டிராக்பேட் வேகம்"),
         ("Numeric one-time password", "எண் ஒருமுறை கடவுச்சொல்"),
         ("Enable IPv6 P2P connection", "IPv6 P2P இணைப்பு இயக்கு"),
-        ("Enable WebRTC P2P connection", "WebRTC P2P இணைப்பு இயக்கு"),
         ("Enable UDP hole punching", "UDP hole punching இயக்கு"),
         ("View camera", "கேமரா பார்"),
         ("Enable camera", "கேமரா இயக்கு"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "CIDR குறியீடு ஆதரிக்கப்படுகிறது, எடுத்துக்காட்டாக 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "WebRTC P2P இணைப்பு இயக்கு"),
     ].iter().cloned().collect();
 }

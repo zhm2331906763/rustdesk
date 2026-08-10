@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "Oletusnopeus kosketuslevylle"),
         ("Numeric one-time password", "Numeerinen kertakäyttösalasana"),
         ("Enable IPv6 P2P connection", "Ota IPv6 P2P yhteys käyttöön"),
-        ("Enable WebRTC P2P connection", "Ota WebRTC P2P yhteys käyttöön"),
         ("Enable UDP hole punching", "Ota käyttöön UDP hole punching  tekniikka"),
         ("View camera", "Näytä kamera"),
         ("Enable camera", "Ota kamera käyttöön"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "CIDR-merkintä on tuettu, esimerkiksi 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "Ota WebRTC P2P yhteys käyttöön"),
     ].iter().cloned().collect();
 }

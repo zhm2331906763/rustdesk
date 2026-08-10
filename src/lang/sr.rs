@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "Podrazumevana brzina dodirne table"),
         ("Numeric one-time password", "Numerička jednokratna lozinka"),
         ("Enable IPv6 P2P connection", "Omogući IPv6 P2P konekciju"),
-        ("Enable WebRTC P2P connection", "Omogući WebRTC P2P konekciju"),
         ("Enable UDP hole punching", "Omogući UDP hole punching"),
         ("View camera", "Pregled kamere"),
         ("Enable camera", "Omogući kameru"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "Podržan je CIDR zapis, na primer 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "Omogući WebRTC P2P konekciju"),
     ].iter().cloned().collect();
 }

@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "기본 트랙패드 속도"),
         ("Numeric one-time password", "숫자 일회용 비밀번호"),
         ("Enable IPv6 P2P connection", "IPv6 P2P 연결 사용"),
-        ("Enable WebRTC P2P connection", "WebRTC P2P 연결 사용"),
         ("Enable UDP hole punching", "UDP 홀 펀칭 사용"),
         ("View camera", "카메라 보기"),
         ("Enable camera", "카메라 허용"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "CIDR 표기를 지원합니다. 예: 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "WebRTC P2P 연결 사용"),
     ].iter().cloned().collect();
 }

@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", ""),
         ("Numeric one-time password", ""),
         ("Enable IPv6 P2P connection", ""),
-        ("Enable WebRTC P2P connection", ""),
         ("Enable UDP hole punching", ""),
         ("View camera", ""),
         ("Enable camera", ""),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", ""),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", ""),
     ].iter().cloned().collect();
 }

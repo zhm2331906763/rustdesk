@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "ტაჩპადის ნაგულისხმევი სიჩქარე"),
         ("Numeric one-time password", "ციფრული ერთჯერადი პაროლი"),
         ("Enable IPv6 P2P connection", "IPv6 P2P კავშირის ჩართვა"),
-        ("Enable WebRTC P2P connection", "WebRTC P2P კავშირის ჩართვა"),
         ("Enable UDP hole punching", "UDP hole punching-ის ჩართვა"),
         ("View camera", "კამერის ნახვა"),
         ("Enable camera", "კამერის ჩართვა"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "მხარდაჭერილია CIDR ჩანაწერი, მაგალითად 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "WebRTC P2P კავშირის ჩართვა"),
     ].iter().cloned().collect();
 }

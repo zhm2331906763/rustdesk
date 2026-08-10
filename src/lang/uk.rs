@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "Швидкість тачпада за замовчуванням"),
         ("Numeric one-time password", "Числовий одноразовий пароль"),
         ("Enable IPv6 P2P connection", "Увімкнути P2P-підключення через IPv6"),
-        ("Enable WebRTC P2P connection", "Увімкнути P2P-підключення через WebRTC"),
         ("Enable UDP hole punching", "Увімкнути UDP hole punching"),
         ("View camera", "Перегляд камери"),
         ("Enable camera", "Увімкнути камеру"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "Підтримується нотація CIDR, наприклад 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "Увімкнути P2P-підключення через WebRTC"),
     ].iter().cloned().collect();
 }

@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "ความเร็วแทร็กแพดเริ่มต้น"),
         ("Numeric one-time password", "รหัสผ่านครั้งเดียวแบบตัวเลข"),
         ("Enable IPv6 P2P connection", "เปิดใช้งานการเชื่อมต่อ P2P แบบ IPv6"),
-        ("Enable WebRTC P2P connection", "เปิดใช้งานการเชื่อมต่อ P2P แบบ WebRTC"),
         ("Enable UDP hole punching", "เปิดใช้งาน UDP hole punching"),
         ("View camera", "ดูกล้อง"),
         ("Enable camera", "เปิดใช้งานกล้อง"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "รองรับรูปแบบ CIDR เช่น 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "เปิดใช้งานการเชื่อมต่อ P2P แบบ WebRTC"),
     ].iter().cloned().collect();
 }

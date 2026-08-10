@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "Trackpad-aren abiadura lehenetsia"),
         ("Numeric one-time password", "Behin-behineko pasahitz numerikoa"),
         ("Enable IPv6 P2P connection", "Gaitu IPv6 P2P konexioa"),
-        ("Enable WebRTC P2P connection", "Gaitu WebRTC P2P konexioa"),
         ("Enable UDP hole punching", "Gaitu UDP zulo-egitea"),
         ("View camera", "Ikusi kamera"),
         ("Enable camera", "Gaitu kamera"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "CIDR notazioa onartzen da, adibidez 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "Gaitu WebRTC P2P konexioa"),
     ].iter().cloned().collect();
 }

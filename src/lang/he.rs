@@ -691,7 +691,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default trackpad speed", "מהירות ברירת מחדל של משטח מגע"),
         ("Numeric one-time password", "סיסמה חד-פעמית מספרית"),
         ("Enable IPv6 P2P connection", "אפשר חיבור IPv6 P2P"),
-        ("Enable WebRTC P2P connection", "אפשר חיבור WebRTC P2P"),
         ("Enable UDP hole punching", "אפשר UDP hole punching"),
         ("View camera", "הצג מצלמה"),
         ("Enable camera", "הפעל מצלמה"),
@@ -776,5 +775,6 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("whitelist_cidr_tip", "יש תמיכה בסימון CIDR, לדוגמה 192.168.1.0/24"),
         ("Continue", ""),
         ("Browser didn't open? Use the url below to sign in.", ""),
+        ("Enable WebRTC P2P connection", "אפשר חיבור WebRTC P2P"),
     ].iter().cloned().collect();
 }
