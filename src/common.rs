@@ -2088,6 +2088,11 @@ pub fn using_public_server() -> bool {
     crate::get_custom_rendezvous_server(get_option("custom-rendezvous-server")).is_empty()
 }
 
+#[inline]
+pub fn is_file_transfer_disabled() -> bool {
+    Config::get_option(keys::OPTION_ENABLE_FILE_TRANSFER) == "N"
+}
+
 pub struct ThrottledInterval {
     interval: Interval,
     next_tick: Instant,

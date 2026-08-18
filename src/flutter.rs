@@ -10,7 +10,9 @@ use hbb_common::dlopen::{
     Error as LibError,
 };
 use hbb_common::{
-    anyhow::anyhow, bail, config::LocalConfig, get_version_number, log, message_proto::*,
+    anyhow::anyhow, bail,
+    config::LocalConfig,
+    get_version_number, log, message_proto::*,
     rendezvous_proto::ConnType, ResultType,
 };
 use serde::Serialize;
@@ -1275,6 +1277,9 @@ pub fn session_add(
     is_shared_password: bool,
     conn_token: Option<String>,
 ) -> ResultType<FlutterSession> {
+    if is_file_transfer && crate::common::is_file_transfer_disabled() {
+        bail!("File transfer is disabled in this build");
+    }
     let conn_type = if is_file_transfer {
         ConnType::FILE_TRANSFER
     } else if is_view_camera {

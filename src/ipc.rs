@@ -930,12 +930,12 @@ async fn handle(data: Data, stream: &mut Connection) {
                         None
                     };
                 } else if name == "hide_cm" {
-                    value = if crate::hbbs_http::sync::is_pro() || crate::common::is_custom_client()
-                    {
-                        Some(hbb_common::password_security::hide_cm().to_string())
-                    } else {
-                        None
-                    };
+                    let forced_hidden = crate::common::get_builtin_option("hide-connection-manager")
+                        == "Y";
+                    let password_hidden = (crate::hbbs_http::sync::is_pro()
+                        || crate::common::is_custom_client())
+                        && hbb_common::password_security::hide_cm();
+                    value = Some((forced_hidden || password_hidden).to_string());
                 } else if name == "voice-call-input" {
                     value = crate::audio_service::get_voice_call_input_device();
                 } else if name == "unlock-pin" {

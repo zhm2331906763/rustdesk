@@ -131,16 +131,17 @@
 			</Component>
 		</StandardDirectory>
 
-		<!--<DirectoryRef Id="INSTALLFOLDER_INNER">
+		<DirectoryRef Id="INSTALLFOLDER_INNER">
 			<Component Id="App.UninstallShortcut" Guid="FB0F2AC7-2AE5-4C54-B860-5E472620B6B1">
 				<Shortcut Id="App.UninstallShortcut" Name="!(loc.SC_Uninstall)" Description="!(loc.SC_Uninstall_Desc)" Target="[System6432Folder]msiexec.exe" Arguments="/x [ProductCode]" Icon="AppIcon" />
+				<RegistryValue Root="HKLM" Key="Software\$(var.Product)" Name="App.UninstallShortcut" Type="string" Value="1" KeyPath="yes" />
 			</Component>
-		</DirectoryRef>-->
+		</DirectoryRef>
 
 		<ComponentGroup Id="Components" Directory="INSTALLFOLDER_INNER">
 			<ComponentRef Id="App.exe" />
 			<ComponentRef Id="App.Desktop.Shortcut" />
-			<!--<ComponentRef Id="App.UninstallShortcut" />-->
+			<ComponentRef Id="App.UninstallShortcut" />
 			<ComponentRef Id="App.StartMenu.Shortcut" />
 			<ComponentRef Id="App.StartMenu.ShortcutUninstall" />
 			<ComponentRef Id="App.StartupFolder.ShortcutTray" />

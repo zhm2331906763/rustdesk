@@ -1,0 +1,551 @@
+# =====================================================================================
+# RustDesk custom build wrapper 閳?TEMPLATE (generic, no real credentials inside)
+#
+# Copy to: .github/workflows/build-custom.yml in YOUR rustdesk fork, then:
+#   1) build-windows-variants -> env: SCITER_RUST_VERSION / LLVM_VERSION / FLUTTER_VERSION
+#      / VCPKG_COMMIT_ID / VERSION must match YOUR fork's flutter-build.yml env block.
+#   2) flutter-build.yml needs the "Upload MSI" and "Upload unsigned APK (artifact)"
+#      steps (see SKILL.md Step 4) or the release will miss .msi / .apk.
+#   3) secrets RENDEZVOUS_SERVER / RELAY_SERVER / API_SERVER / RS_PUB_KEY /
+#      FIXED_PASSWORD must be set on the fork.
+#   4) Trigger: gh workflow run build-custom.yml --repo owner/rustdesk
+#      (optionally -F release_name=custom). The release tag is rustdesk-YYYYMMDD (UTC)
+#      unless release_name is provided.
+#   5) SECURITY: the generated release notes are generic on purpose 閳?never add server
+#      / API / password / key to them; report those values to the user privately.
+# =====================================================================================
+name: Build Custom RustDesk
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: "Release/tag name. Leave empty for rustdesk-YYYYMMDD (UTC)"
+        type: string
+        required: false
+        default: ""
+
+env:
+  RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER }}"
+  RELAY_SERVER: "${{ secrets.RELAY_SERVER }}"
+  API_SERVER: "${{ secrets.API_SERVER }}"
+  RS_PUB_KEY: "${{ secrets.RS_PUB_KEY }}"
+  FIXED_PASSWORD: "${{ secrets.FIXED_PASSWORD }}"
+  PRE_ELEVATE_SERVICE: "Y"
+  HIDE_CONNECTION_MANAGER: "Y"
+  HIDE_SETUP_SERVER_TIP: "Y"
+
+jobs:
+  # ============ 鐎瑰本鏆ｉ悧鍫窗Windows 鐎瑰本鏆ｉ悧?exe+msi) + Ubuntu(deb) + Android(apk) ============
+  build-full:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/flutter-build.yml
+    with:
+      upload-artifact: true
+      upload-tag: "custom-build"
+      build-scope: "release-platforms"
+    secrets: inherit
+
+  # ============ Windows 鐎规艾鍩楅悧鍫礄娴犲懓顫﹂幒?/ 閸樿宕岀痪褍鐣弫瀵稿 / 閸樿宕岀痪褌绮庣悮顐ｅ付閿?============
+  build-windows-variants:
+    if: ${{ !cancelled() }}
+    needs: build-full
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { artifact: full-artifact, msi_artifact: full-msi-artifact, appname: "", conn_type: "", out: "rustdesk", full: "true" }
+          - { artifact: slave-artifact, appname: "", conn_type: "incoming", out: "rustdesk" }
+          - { artifact: noupdate-artifact, appname: "rustdeskpro", conn_type: "", out: "rustdeskpro" }
+          - { artifact: noupdate-slave-artifact, appname: "rustdeskpro", conn_type: "incoming", out: "rustdeskpro" }
+          - { artifact: notransfer-full-artifact, msi_artifact: notransfer-full-msi-artifact, appname: "", conn_type: "", out: "rustdesk", no_transfer: "true", full: "true" }
+          - { artifact: notransfer-slave-artifact, appname: "", conn_type: "incoming", out: "rustdesk", no_transfer: "true" }
+          - { artifact: notransfer-noupdate-artifact, appname: "rustdeskpro", conn_type: "", out: "rustdeskpro", no_transfer: "true" }
+          - { artifact: notransfer-noupdate-slave-artifact, appname: "rustdeskpro", conn_type: "incoming", out: "rustdeskpro", no_transfer: "true" }
+    env:
+      RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER }}"
+      RELAY_SERVER: "${{ secrets.RELAY_SERVER }}"
+      API_SERVER: "${{ secrets.API_SERVER }}"
+      RS_PUB_KEY: "${{ secrets.RS_PUB_KEY }}"
+      FIXED_PASSWORD: "${{ secrets.FIXED_PASSWORD }}"
+      PRE_ELEVATE_SERVICE: "Y"
+      HIDE_CONNECTION_MANAGER: "Y"
+      HIDE_SETUP_SERVER_TIP: "Y"
+      APP_NAME: ${{ matrix.variant.appname }}
+      CONN_TYPE: ${{ matrix.variant.conn_type }}
+      DISABLE_FILE_TRANSFER: ${{ matrix.variant.no_transfer == 'true' && 'Y' || '' }}
+      SCITER_RUST_VERSION: "1.75"
+      LLVM_VERSION: "15.0.6"
+      FLUTTER_VERSION: "3.24.5"
+      VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
+      VERSION: "1.4.9"
+      VCPKG_DEFAULT_HOST_TRIPLET: "x64-windows-static"
+    steps:
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Checkout source code (fork, submodules recursive)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore bridge files
+        uses: actions/download-artifact@v4
+        with:
+          name: bridge-artifact
+          path: ./
+
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v2.0.9
+        with:
+          version: ${{ env.LLVM_VERSION }}
+
+      - name: Install flutter
+        id: flutter
+        uses: subosito/flutter-action@v2.12.0
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          architecture: x64
+
+      - name: Replace engine with rustdesk custom flutter engine
+        run: |
+          flutter doctor -v
+          flutter precache --windows
+          Invoke-WebRequest -Uri https://github.com/rustdesk/engine/releases/download/main/windows-x64-release.zip -OutFile windows-x64-release.zip
+          Expand-Archive -Path windows-x64-release.zip -DestinationPath windows-x64-release
+          mv -Force windows-x64-release/*  C:/hostedtoolcache/windows/flutter/stable-${{ env.FLUTTER_VERSION }}-x64/bin/cache/artifacts/engine/windows-x64-release/
+
+      - name: Patch flutter
+        shell: bash
+        run: |
+          cp .github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff $(dirname $(dirname $(which flutter)))
+          cd $(dirname $(dirname $(which flutter)))
+          [[ "3.24.5" == ${{env.FLUTTER_VERSION}} ]] && git apply flutter_3.24.4_dropdown_menu_enableFilter.diff
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ env.SCITER_RUST_VERSION }}
+          targets: x86_64-pc-windows-msvc
+          components: "rustfmt"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: windows-2022
+
+      - name: Setup vcpkg with Github Actions binary cache
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: C:\vcpkg
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          doNotCache: false
+
+      - name: Install vcpkg dependencies
+        env:
+          VCPKG_DEFAULT_HOST_TRIPLET: x64-windows-static
+        run: |
+          if ! $VCPKG_ROOT/vcpkg \
+            install \
+            --triplet x64-windows-static \
+            --x-install-root="$VCPKG_ROOT/installed"; then
+            find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+              echo "$_1:"
+              echo "======"
+              cat "$_1"
+              echo "======"
+              echo ""
+            done
+            exit 1
+          fi
+          head -n 100 "${VCPKG_ROOT}/buildtrees/ffmpeg/build-x64-windows-static-rel-out.log" || true
+        shell: bash
+
+      - name: Verify custom compile environment
+        shell: pwsh
+        run: |
+          $required = @(
+            "RENDEZVOUS_SERVER",
+            "RELAY_SERVER",
+            "API_SERVER",
+            "RS_PUB_KEY",
+            "FIXED_PASSWORD",
+            "PRE_ELEVATE_SERVICE",
+            "HIDE_CONNECTION_MANAGER",
+            "HIDE_SETUP_SERVER_TIP"
+          )
+          foreach ($name in $required) {
+            if ($null -eq [Environment]::GetEnvironmentVariable($name)) {
+              throw "Missing custom compile environment variable: $name"
+            }
+          }
+          if ([string]::IsNullOrWhiteSpace($env:RENDEZVOUS_SERVER)) {
+            throw "RENDEZVOUS_SERVER must not be empty"
+          }
+          if ([string]::IsNullOrWhiteSpace($env:RELAY_SERVER)) {
+            throw "RELAY_SERVER must not be empty"
+          }
+          Write-Host "Custom compile environment is present; secret values are not printed."
+
+      - name: Build rustdesk
+        run: |
+          python3 .\build.py --portable --flutter --skip-portable-pack --hwcodec --vram
+          mv ./flutter/build/windows/x64/runner/Release ./rustdesk
+
+          Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip
+          Expand-Archive usbmmidd_v2.zip -DestinationPath .
+          Remove-Item -Path usbmmidd_v2\Win32 -Recurse
+          Remove-Item -Path "usbmmidd_v2\deviceinstaller64.exe", "usbmmidd_v2\deviceinstaller.exe", "usbmmidd_v2\usbmmidd.bat"
+          mv -Force .\usbmmidd_v2 ./rustdesk
+
+          try {
+            Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/rustdesk_printer_driver_v4-1.4.zip -OutFile rustdesk_printer_driver_v4-1.4.zip
+            Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/printer_driver_adapter.zip -OutFile printer_driver_adapter.zip
+            Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/sha256sums -OutFile sha256sums
+            $checksum_driver = (Select-String -Path .\sha256sums -Pattern '^([a-fA-F0-9]{64}) \*rustdesk_printer_driver_v4-1.4\.zip$').Matches.Groups[1].Value
+            $downloadsum_driver = Get-FileHash -Path rustdesk_printer_driver_v4-1.4.zip -Algorithm SHA256
+            $checksum_adapter = (Select-String -Path .\sha256sums -Pattern '^([a-fA-F0-9]{64}) \*printer_driver_adapter\.zip$').Matches.Groups[1].Value
+            $downloadsum_adapter = Get-FileHash -Path printer_driver_adapter.zip -Algorithm SHA256
+            if ($checksum_driver -eq $downloadsum_driver.Hash -and $checksum_adapter -eq $downloadsum_adapter.Hash) {
+                Expand-Archive rustdesk_printer_driver_v4-1.4.zip -DestinationPath .
+                mkdir ./rustdesk/drivers
+                mv -Force .\rustdesk_printer_driver_v4-1.4 ./rustdesk/drivers/RustDeskPrinterDriver
+                Expand-Archive printer_driver_adapter.zip -DestinationPath .
+                mv -Force .\printer_driver_adapter.dll ./rustdesk
+            }
+          } catch {
+              Write-Host "Ingore the printer driver error."
+          }
+
+      - name: find Runner.res
+        continue-on-error: true
+        shell: bash
+        run: |
+          runner_res=$(find . -name "Runner.res");
+          if [ "$runner_res" == "" ]; then
+            echo "Runner.res: not found";
+          else
+            echo "Runner.res: $runner_res";
+            cp $runner_res ./libs/portable/Runner.res;
+          fi
+      - name: Download RustDeskTempTopMostWindow artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: topmostwindow-artifacts-x64
+          path: "./rustdesk"
+
+      - name: Rename exe to match app name
+        if: ${{ matrix.variant.appname == 'rustdeskpro' }}
+        shell: bash
+        run: |
+          ls -la ./rustdesk/*.exe
+          mv ./rustdesk/rustdesk.exe ./rustdesk/rustdeskpro.exe
+          ls -la ./rustdesk/rustdeskpro.exe
+
+      - name: Build self-extracted executable
+        shell: bash
+        run: |
+          sed -i '/dpiAware/d' res/manifest.xml
+          pushd ./libs/portable
+          pip3 install -r requirements.txt
+          if [ "${{ matrix.variant.appname }}" = "rustdeskpro" ]; then
+            python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdeskpro.exe
+          else
+            python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
+          fi
+          popd
+          mkdir -p ./SignOutput
+          mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/${{ matrix.variant.out }}-${{ env.VERSION }}-x86_64.exe
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.variant.artifact }}
+          path: ./SignOutput/*.exe
+
+      - name: Add MSBuild to PATH (custom full)
+        if: ${{ matrix.variant.full == 'true' }}
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build MSI (custom full)
+        if: ${{ matrix.variant.full == 'true' }}
+        run: |
+          pushd ./res/msi
+          python preprocess.py --arp -d ../../rustdesk
+          nuget restore msi.sln
+          msbuild msi.sln -p:Configuration=Release -p:Platform=x64 /p:TargetVersion=Windows10
+          $msi = Get-ChildItem ./Package/bin/*/Release/en-us/Package.msi | Select-Object -First 1
+          mv $msi.FullName ../../SignOutput/rustdesk-${{ env.VERSION }}-x86_64.msi
+
+      - name: Upload MSI (custom full)
+        if: ${{ matrix.variant.full == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.variant.msi_artifact }}
+          path: ./SignOutput/*.msi
+
+  # ============ 閺佸鎮婃禍褏澧?+ 閺傝顢? 閸掑棛绮嶇拠瀛樻 ============
+  # ============ 閺佸鎮婃禍褏澧?+ 閺傝顢? 閸掑棛绮嶇拠瀛樻 ============
+  create-release:
+    if: ${{ !cancelled() }}
+    needs: [build-full, build-windows-variants]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: rustdesk-*
+          merge-multiple: true
+          path: artifacts/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: full-artifact
+          path: full/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: full-msi-artifact
+          path: full-msi/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: slave-artifact
+          path: slave/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: noupdate-artifact
+          path: noupdate/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: noupdate-slave-artifact
+          path: noupdate-slave/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: notransfer-full-artifact
+          path: notransfer-full/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: notransfer-full-msi-artifact
+          path: notransfer-full-msi/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: notransfer-slave-artifact
+          path: notransfer-slave/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: notransfer-noupdate-artifact
+          path: notransfer-noupdate/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: notransfer-noupdate-slave-artifact
+          path: notransfer-noupdate-slave/
+        continue-on-error: true
+      - name: Filter and rename artifacts
+        shell: bash
+        run: |
+          set -e
+          mkdir -p release
+
+          for f in full/*.exe full-msi/*.msi; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            cp "$f" "release/windows-$base"
+          done
+
+          for f in slave/*.exe; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            cp "$f" "release/windows-Slave-$base"
+          done
+
+          for f in noupdate/*.exe; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            cp "$f" "release/windows-$base"
+          done
+
+          for f in noupdate-slave/*.exe; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            cp "$f" "release/windows-Slave-$base"
+          done
+
+          # NoTransfer keeps the same four Windows forms as the standard build.
+          for f in notransfer-full/*.exe notransfer-full-msi/*.msi; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            cp "$f" "release/windows-NoTransfer-$base"
+          done
+
+          for f in notransfer-slave/*.exe; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            cp "$f" "release/windows-NoTransfer-Slave-$base"
+          done
+
+          for f in notransfer-noupdate/*.exe; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            cp "$f" "release/windows-NoTransfer-$base"
+          done
+
+          for f in notransfer-noupdate-slave/*.exe; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            cp "$f" "release/windows-NoTransfer-Slave-$base"
+          done
+
+          find artifacts/ -maxdepth 3 -type f -name "rustdesk-*" \
+            \( -name "*.exe" -o -name "*.msi" -o -name "*.deb" -o -name "*.apk" -o -name "*.rpm" -o -name "*.dmg" \) |
+            while read -r f; do
+              base=$(basename "$f")
+              case "$base" in
+                *.rpm|*.dmg)
+                  continue
+                  ;;
+                *.exe|*.msi)
+                  # Windows Release assets must come from the explicit custom
+                  # matrix above, never from the reusable workflow fallback.
+                  continue
+                  ;;
+                *.deb)
+                  [[ "$base" == *x86_64* ]] || continue
+                  new="ubuntu-$base"
+                  ;;
+                *.apk)
+                  new="android-$base"
+                  ;;
+                *)
+                  continue
+                  ;;
+              esac
+              cp "$f" "release/$new"
+            done
+
+          ls -lh release/
+
+      - name: Generate grouped release notes
+        shell: bash
+        run: |
+          REPO="${{ github.repository }}"
+          if [ -n "${{ inputs.release_name }}" ]; then
+            RELEASE_NAME="${{ inputs.release_name }}"
+          else
+            RELEASE_NAME="rustdesk-$(date +'%Y%m%d')"
+          fi
+          BASE="https://github.com/$REPO/releases/download/$RELEASE_NAME"
+          NO_TRANSFER_TITLE=$(printf 'Windows \347\246\201\346\255\242\346\226\207\344\273\266\344\274\240\350\276\223\347\211\210')
+          rm -f /tmp/rdnote_*.txt
+          : > NOTES.md
+
+          for f in release/*; do
+            [ -f "$f" ] || continue
+            b=$(basename "$f")
+            tag="99_other"
+            desc=""
+
+            if [[ "$b" == windows-NoTransfer-* ]]; then
+              tag="04_no_transfer"
+              if [[ "$b" == *rustdeskpro* && "$b" == *Slave* ]]; then
+                desc="RustDeskPro controlled-only"
+              elif [[ "$b" == *rustdeskpro* ]]; then
+                desc="RustDeskPro full"
+              elif [[ "$b" == *Slave* ]]; then
+                desc="Controlled-only"
+              elif [[ "$b" == *.msi ]]; then
+                desc="Installer"
+              else
+                desc="Full"
+              fi
+            elif [[ "$b" == windows-*rustdeskpro* && "$b" == *Slave* ]]; then
+              tag="03_no_update"
+              desc="RustDeskPro controlled-only"
+            elif [[ "$b" == windows-*rustdeskpro* ]]; then
+              tag="03_no_update"
+              desc="RustDeskPro full"
+            elif [[ "$b" == windows-Slave-* ]]; then
+              tag="02_slave"
+              desc="Controlled-only"
+            elif [[ "$b" == windows-* && "$b" == *.msi ]]; then
+              tag="01_full"
+              desc="Installer"
+            elif [[ "$b" == windows-* ]]; then
+              tag="01_full"
+              desc="Portable"
+            elif [[ "$b" == ubuntu-* ]]; then
+              tag="05_ubuntu"
+            elif [[ "$b" == android-* ]]; then
+              tag="06_android"
+            fi
+
+            if [ -n "$desc" ]; then
+              suffix=" - $desc"
+            else
+              suffix=""
+            fi
+            printf '%s\n' "- [$b]($BASE/$b)$suffix" >> "/tmp/rdnote_${tag}.txt"
+          done
+
+          {
+            echo "# RustDesk Custom Build"
+            echo
+            for entry in \
+              "01_full:Windows Full" \
+              "02_slave:Windows Controlled-only" \
+              "03_no_update:Windows No-update" \
+              "04_no_transfer:$NO_TRANSFER_TITLE" \
+              "05_ubuntu:Ubuntu" \
+              "06_android:Android" \
+              "99_other:Other"; do
+              tag="${entry%%:*}"
+              title="${entry#*:}"
+              if [ -s "/tmp/rdnote_${tag}.txt" ]; then
+                echo "## $title"
+                echo
+                cat "/tmp/rdnote_${tag}.txt"
+                echo
+              fi
+            done
+          } >> NOTES.md
+
+          cat NOTES.md
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REPO="${{ github.repository }}"
+          if [ -n "${{ inputs.release_name }}" ]; then
+            RELEASE_NAME="${{ inputs.release_name }}"
+          else
+            RELEASE_NAME="rustdesk-$(date +'%Y%m%d')"
+          fi
+          gh api -X DELETE "repos/$REPO/releases/tags/$RELEASE_NAME" 2>/dev/null || true
+          gh api -X DELETE "repos/$REPO/git/refs/tags/$RELEASE_NAME" 2>/dev/null || true
+          gh api -X DELETE "repos/$REPO/releases/tags/custom-build" 2>/dev/null || true
+          gh api -X DELETE "repos/$REPO/git/refs/tags/custom-build" 2>/dev/null || true
+          if ls release/* >/dev/null 2>&1; then
+            gh release create "$RELEASE_NAME" release/* \
+              --repo "$REPO" \
+              --title "$RELEASE_NAME" \
+              --notes-file NOTES.md \
+              --prerelease
+            echo "Release created: $RELEASE_NAME"
+          else
+            echo "No artifacts to publish!"
+            exit 1
+          fi

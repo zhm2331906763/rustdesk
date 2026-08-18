@@ -127,6 +127,12 @@ pub fn core_main() -> Option<Vec<String>> {
     if args.contains(&"--noinstall".to_string()) {
         args.clear();
     }
+    if args.iter().any(|arg| arg == "--file-transfer")
+        && config::Config::get_option(config::keys::OPTION_ENABLE_FILE_TRANSFER) == "N"
+    {
+        log::warn!("File transfer is disabled in this build");
+        return None;
+    }
     // The portable wrapper injects `--install` when its name ends with `install.exe`,
     // including `no-install.exe`. Drop the argument instead of exiting so disabled
     // clients can continue running as portable applications.
