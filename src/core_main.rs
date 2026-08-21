@@ -14,6 +14,11 @@ use tauri_winrt_notification::{Duration, Sound, Toast};
 // custom compile environment reached the Rust compiler without exposing any
 // server, key, or password material.
 #[cfg(windows)]
+#[used]
+#[no_mangle]
+pub static RUSTDESK_CUSTOM_BUILD_MARKER: &[u8] = config::CUSTOM_BUILD_MARKER.as_bytes();
+
+#[cfg(windows)]
 #[no_mangle]
 pub extern "C" fn rustdesk_custom_build_marker() -> *const u8 {
     config::CUSTOM_BUILD_MARKER.as_ptr()
