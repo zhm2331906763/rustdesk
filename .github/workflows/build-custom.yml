@@ -33,7 +33,9 @@ env:
   FIXED_PASSWORD: "${{ secrets.FIXED_PASSWORD }}"
   PRE_ELEVATE_SERVICE: "Y"
   HIDE_CONNECTION_MANAGER: "Y"
+  HIDE_REMOTE_CONNECTION_NOTIFICATION: "Y"
   HIDE_SETUP_SERVER_TIP: "Y"
+  RUSTDESK_ENFORCE_CUSTOM_WINDOWS_BUILD: "Y"
 
 jobs:
   # ============ 鐎瑰本鏆ｉ悧鍫窗Windows 鐎瑰本鏆ｉ悧?exe+msi) + Ubuntu(deb) + Android(apk) ============
@@ -72,7 +74,9 @@ jobs:
       FIXED_PASSWORD: "${{ secrets.FIXED_PASSWORD }}"
       PRE_ELEVATE_SERVICE: "Y"
       HIDE_CONNECTION_MANAGER: "Y"
+      HIDE_REMOTE_CONNECTION_NOTIFICATION: "Y"
       HIDE_SETUP_SERVER_TIP: "Y"
+      RUSTDESK_ENFORCE_CUSTOM_WINDOWS_BUILD: "Y"
       APP_NAME: ${{ matrix.variant.appname }}
       CONN_TYPE: ${{ matrix.variant.conn_type }}
       DISABLE_FILE_TRANSFER: ${{ matrix.variant.no_transfer == 'true' && 'Y' || '' }}
@@ -176,9 +180,14 @@ jobs:
             "API_SERVER",
             "RS_PUB_KEY",
             "FIXED_PASSWORD",
+            "APP_NAME",
+            "CONN_TYPE",
+            "DISABLE_FILE_TRANSFER",
             "PRE_ELEVATE_SERVICE",
             "HIDE_CONNECTION_MANAGER",
-            "HIDE_SETUP_SERVER_TIP"
+            "HIDE_REMOTE_CONNECTION_NOTIFICATION",
+            "HIDE_SETUP_SERVER_TIP",
+            "RUSTDESK_ENFORCE_CUSTOM_WINDOWS_BUILD"
           )
           foreach ($name in $required) {
             if ($null -eq [Environment]::GetEnvironmentVariable($name)) {
@@ -192,6 +201,23 @@ jobs:
             throw "RELAY_SERVER must not be empty"
           }
           Write-Host "Custom compile environment is present; secret values are not printed."
+
+      - name: Verify custom Windows compile profile
+        shell: pwsh
+        run: |
+          if ($env:RUSTDESK_ENFORCE_CUSTOM_WINDOWS_BUILD -ne "Y") {
+            throw "Custom Windows compiler guard is disabled"
+          }
+          if ($env:PRE_ELEVATE_SERVICE -ne "Y" -or
+              $env:HIDE_CONNECTION_MANAGER -ne "Y" -or
+              $env:HIDE_REMOTE_CONNECTION_NOTIFICATION -ne "Y" -or
+              $env:HIDE_SETUP_SERVER_TIP -ne "Y") {
+            throw "One or more required Windows custom feature flags are not Y"
+          }
+          if ($env:DISABLE_FILE_TRANSFER -ne "" -and $env:DISABLE_FILE_TRANSFER -ne "Y") {
+            throw "DISABLE_FILE_TRANSFER must be empty or Y"
+          }
+          Write-Host "Custom Windows compile profile is valid; secret values are not printed."
 
       - name: Build rustdesk
         run: |
@@ -222,6 +248,21 @@ jobs:
           } catch {
               Write-Host "Ingore the printer driver error."
           }
+
+      - name: Verify compiled custom Windows marker
+        shell: pwsh
+        run: |
+          $marker = "rustdesk-custom;app=$($env:APP_NAME);conn=$($env:CONN_TYPE);transfer=$($env:DISABLE_FILE_TRANSFER);pre=$($env:PRE_ELEVATE_SERVICE);cm=$($env:HIDE_CONNECTION_MANAGER);remote=$($env:HIDE_REMOTE_CONNECTION_NOTIFICATION);tip=$($env:HIDE_SETUP_SERVER_TIP)"
+          $path = Resolve-Path ./rustdesk/librustdesk.dll -ErrorAction SilentlyContinue
+          if ($null -eq $path) {
+            throw "Compiled RustDesk runtime library is missing"
+          }
+          $bytes = [System.IO.File]::ReadAllBytes($path.Path)
+          $binaryText = [System.Text.Encoding]::ASCII.GetString($bytes)
+          if ($binaryText.IndexOf($marker, [System.StringComparison]::Ordinal) -lt 0) {
+            throw "Compiled RustDesk runtime is missing the expected non-sensitive custom build marker"
+          }
+          Write-Host "Compiled RustDesk runtime contains the expected custom build marker."
 
       - name: find Runner.res
         continue-on-error: true

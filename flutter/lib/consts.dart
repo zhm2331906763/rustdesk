@@ -137,6 +137,8 @@ const String kOptionZoomCursor = "zoom-cursor";
 const String kOptionShowQualityMonitor = "show_quality_monitor";
 const String kOptionDisableAudio = "disable_audio";
 const String kOptionEnableFileCopyPaste = "enable-file-copy-paste";
+const String kOptionHideRemoteConnectionNotification =
+    "hide-remote-connection-notification";
 // "Settings -> Display -> Other default options"
 const String kOptionDisableClipboard = "disable_clipboard";
 const String kOptionLockAfterSessionEnd = "lock_after_session_end";

@@ -10,6 +10,15 @@ use hbb_common::{config, log};
 #[cfg(windows)]
 use tauri_winrt_notification::{Duration, Sound, Toast};
 
+// Kept as an exported symbol so the Windows workflow can verify that the
+// custom compile environment reached the Rust compiler without exposing any
+// server, key, or password material.
+#[cfg(windows)]
+#[no_mangle]
+pub extern "C" fn rustdesk_custom_build_marker() -> *const u8 {
+    config::CUSTOM_BUILD_MARKER.as_ptr()
+}
+
 #[macro_export]
 macro_rules! my_println{
     ($($arg:tt)*) => {

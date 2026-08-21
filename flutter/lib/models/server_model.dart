@@ -32,6 +32,14 @@ class ServerModel with ChangeNotifier {
   bool _clipboardOk = false;
   bool _showElevation = false;
   bool hideCm = false;
+
+  bool get hideRemoteConnectionNotification =>
+      bind.mainGetBuildinOption(
+          key: kOptionHideRemoteConnectionNotification) ==
+      'Y';
+
+  bool get _shouldHideConnectionManager =>
+      hideCm || hideRemoteConnectionNotification;
   int _connectStatus = 0; // Rendezvous Server status
   String _verificationMethod = "";
   String _temporaryPasswordLength = "";
@@ -170,7 +178,7 @@ class ServerModel with ChangeNotifier {
             }
           } else {
             _zeroClientLengthCounter = 0;
-            if (!hideCm) showCmWindow();
+            if (!_shouldHideConnectionManager) showCmWindow();
           }
         }
       }
@@ -530,7 +538,7 @@ class ServerModel with ChangeNotifier {
     if (desktopType == DesktopType.cm) {
       if (_clients.isEmpty) {
         hideCmWindow();
-      } else if (!hideCm) {
+      } else if (!_shouldHideConnectionManager) {
         showCmWindow();
       }
     }
@@ -574,7 +582,7 @@ class ServerModel with ChangeNotifier {
         _clients.removeAt(index_disconnected);
         tabController.remove(index_disconnected);
       }
-      if (desktopType == DesktopType.cm && !hideCm) {
+      if (desktopType == DesktopType.cm && !_shouldHideConnectionManager) {
         showCmWindow();
       }
       scrollToBottom();
@@ -594,12 +602,12 @@ class ServerModel with ChangeNotifier {
         onTap: () {},
         page: desktop.buildConnectionCard(client)));
     Future.delayed(Duration.zero, () async {
-      if (!hideCm) windowOnTop(null);
+      if (!_shouldHideConnectionManager) windowOnTop(null);
     });
     // Only do the hidden task when on Desktop.
     if (client.authorized && isDesktop) {
       cmHiddenTimer = Timer(const Duration(seconds: 3), () {
-        if (!hideCm) windowManager.minimize();
+        if (!_shouldHideConnectionManager) windowManager.minimize();
         cmHiddenTimer = null;
       });
     }

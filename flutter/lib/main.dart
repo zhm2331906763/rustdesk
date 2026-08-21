@@ -289,7 +289,9 @@ void runConnectionManagerScreen() async {
     const DesktopServerPage(),
     MyTheme.currentThemeMode(),
   );
-  final hide = await bind.cmGetConfig(name: "hide_cm") == 'true';
+  final hide =
+      isRemoteConnectionNotificationHidden() ||
+      await bind.cmGetConfig(name: "hide_cm") == 'true';
   gFFI.serverModel.hideCm = hide;
   if (hide) {
     await hideCmWindow(isStartup: true);
@@ -303,7 +305,17 @@ void runConnectionManagerScreen() async {
 
 bool _isCmReadyToShow = false;
 
+bool isRemoteConnectionNotificationHidden() {
+  return bind.mainGetBuildinOption(
+          key: kOptionHideRemoteConnectionNotification) ==
+      'Y';
+}
+
 showCmWindow({bool isStartup = false}) async {
+  if (isRemoteConnectionNotificationHidden()) {
+    await hideCmWindow(isStartup: isStartup);
+    return;
+  }
   if (isStartup) {
     WindowOptions windowOptions = getHiddenTitleBarWindowOptions(
         size: kConnectionManagerWindowSizeClosedChat, alwaysOnTop: true);

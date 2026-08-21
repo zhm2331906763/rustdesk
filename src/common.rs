@@ -1030,6 +1030,9 @@ pub fn is_setup(name: &str) -> bool {
 }
 
 pub fn get_custom_rendezvous_server(custom: String) -> String {
+    if !config::PROD_RENDEZVOUS_SERVER.read().unwrap().is_empty() {
+        return config::PROD_RENDEZVOUS_SERVER.read().unwrap().clone();
+    }
     #[cfg(windows)]
     if let Ok(lic) = crate::platform::windows::get_license_from_exe_name() {
         if !lic.host.is_empty() {
@@ -1038,9 +1041,6 @@ pub fn get_custom_rendezvous_server(custom: String) -> String {
     }
     if !custom.is_empty() {
         return custom;
-    }
-    if !config::PROD_RENDEZVOUS_SERVER.read().unwrap().is_empty() {
-        return config::PROD_RENDEZVOUS_SERVER.read().unwrap().clone();
     }
     "".to_owned()
 }
@@ -2308,6 +2308,7 @@ pub fn read_custom_client(config: &str) {
                 .insert(k, v.to_owned());
         };
     }
+    config::reapply_compiled_custom_settings();
 }
 
 #[inline]

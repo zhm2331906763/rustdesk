@@ -736,6 +736,13 @@ Future<void> windowOnTop(int? id) async {
   if (!isDesktop) {
     return;
   }
+  if (id == null &&
+      desktopType == DesktopType.cm &&
+      bind.mainGetBuildinOption(
+              key: kOptionHideRemoteConnectionNotification) ==
+          'Y') {
+    return;
+  }
   print("Bring window '$id' on top");
   if (id == null) {
     // main window

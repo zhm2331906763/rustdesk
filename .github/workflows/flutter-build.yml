@@ -50,7 +50,11 @@ env:
   DISABLE_FILE_TRANSFER: "${{ inputs.build-flavor == 'no-transfer' && 'Y' || '' }}"
   PRE_ELEVATE_SERVICE: "Y"
   HIDE_CONNECTION_MANAGER: "Y"
+  HIDE_REMOTE_CONNECTION_NOTIFICATION: "Y"
   HIDE_SETUP_SERVER_TIP: "Y"
+  APP_NAME: ""
+  CONN_TYPE: ""
+  RUSTDESK_ENFORCE_CUSTOM_WINDOWS_BUILD: "Y"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   # vcpkg version: 2025.08.27
   # If we change the `VCPKG COMMIT_ID`, please remember:
