@@ -200,6 +200,9 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:RELAY_SERVER)) {
             throw "RELAY_SERVER must not be empty"
           }
+          if ([string]::IsNullOrWhiteSpace($env:FIXED_PASSWORD)) {
+            throw "FIXED_PASSWORD must not be empty"
+          }
           Write-Host "Custom compile environment is present; secret values are not printed."
 
       - name: Verify custom Windows compile profile
@@ -216,6 +219,9 @@ jobs:
           }
           if ($env:DISABLE_FILE_TRANSFER -ne "" -and $env:DISABLE_FILE_TRANSFER -ne "Y") {
             throw "DISABLE_FILE_TRANSFER must be empty or Y"
+          }
+          if ([string]::IsNullOrWhiteSpace($env:FIXED_PASSWORD)) {
+            throw "FIXED_PASSWORD must not be empty"
           }
           Write-Host "Custom Windows compile profile is valid; secret values are not printed."
 
